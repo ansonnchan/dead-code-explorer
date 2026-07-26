@@ -25,7 +25,7 @@
   ],
   "main": "./dist/extension.js",
   "scripts": {
-    "build": "tsc -p tsconfig.json && esbuild src/extension.ts --bundle --platform=node --format=cjs --external:vscode --sourcemap --outfile=dist/extension.js",
+    "build": "tsc -p tsconfig.json && esbuild src/extension.ts --bundle --platform=node --format=cjs --external:vscode --minify --sourcemap --outfile=dist/extension.js",
     "watch": "tsc -p tsconfig.json --watch",
     "lint": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
