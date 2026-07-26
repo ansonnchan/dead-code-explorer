@@ -154,4 +154,30 @@ describe("repository scanner", () => {
       result.findings.some((item) => item.name === "liveHelper")
     ).toBe(false);
   });
+
+  it("finds functions referenced only from unreachable symbol chains", () => {
+    const result = scanRepository(
+      fixturePath("symbol-reachability"),
+      config()
+    );
+
+    expect(
+      result.findings
+        .filter((finding) => finding.kind === "unreachable-symbol")
+        .map((finding) => finding.name)
+        .sort()
+    ).toEqual(["cycleA", "cycleB", "deadHelper"]);
+    expect(
+      result.findings.some(
+        (finding) =>
+          finding.kind === "unused-export" &&
+          finding.name === "abandonedFeature"
+      )
+    ).toBe(true);
+    expect(
+      result.findings.some((finding) =>
+        ["runApplication", "liveHelper"].includes(finding.name)
+      )
+    ).toBe(false);
+  });
 });

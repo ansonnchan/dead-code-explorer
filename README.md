@@ -10,7 +10,9 @@ prove that every export in that file is used, so the scanner builds both:
 
 - a file import graph for entry-point reachability; and
 - a symbol/reference index that follows TypeScript aliases through barrel
-  re-exports.
+  re-exports; and
+- a symbol reachability graph that distinguishes references from live
+  execution paths from references that exist only inside other dead symbols.
 
 Every result includes evidence, a confidence score, and known static-analysis
 risks. A result is never a claim that code is safe to delete.
@@ -34,6 +36,7 @@ The activity bar contains the Dead Code Explorer view. A scan shows file,
 symbol, edge, and duration metrics followed by:
 
 - Unused Files
+- Unreachable Symbols
 - Unused Exports
 - Unused Types
 - Unused Local Symbols
@@ -151,6 +154,12 @@ CommonJS `require`, framework-specific route discovery, monorepos, runtime
 dependency injection, decorators/metadata, and arbitrary dynamic property
 access are not proven by static references. Results affected by detectable
 risks are deliberately downgraded.
+
+Symbol reachability identifies functions and other declarations referenced
+only by unreachable declaration chains, including dead cycles. It does not yet
+construct statement-level control-flow graphs, so unreachable statements after
+`return`, `throw`, or statically impossible branches are outside the current
+scope.
 
 JavaScript and JSX are analyzed when the project enables `allowJs` and includes
 those files in `tsconfig.json`; JSDoc-aware projects can additionally enable
