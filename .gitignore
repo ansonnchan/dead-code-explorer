@@ -3,3 +3,5 @@ dist/
 coverage/
 *.vsix
 .DS_Store
+benchmarks/results/*-latest.json
+benchmarks/results/*-latest.md

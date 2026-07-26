@@ -138,6 +138,39 @@ The script records full-scan duration and heap growth for 100, 1,000, and
 completed in about 0.3 seconds and the 5,001-file fixture in about 3.6 seconds;
 results vary by hardware and Node.js version.
 
+Benchmark any source-bearing, single-`tsconfig` repository in fresh Node
+processes with:
+
+```sh
+npm run benchmark:repo -- /absolute/path/to/project \
+  --runs 30 \
+  --warmups 3 \
+  --label private-repository
+```
+
+The command writes sanitized JSON and Markdown reports under
+`benchmarks/results/`. Reports include p50/p95 full-scan latency, synchronous
+event-loop blocking, peak RSS, files/second, KLOC/second, hardware, Node
+version, and analyzer commit. Repository paths and source contents are never
+written to the report. Default `*-latest` reports are ignored by Git.
+
+For a monorepo with a solution-style root `tsconfig.json`, pass package roots
+whose configs include source files:
+
+```sh
+npm run benchmark:repo -- \
+  /repo/packages/api \
+  /repo/packages/web \
+  --runs 30 \
+  --label private-monorepo
+```
+
+Multiple roots are scanned independently and aggregated. Their performance
+numbers describe the work performed, but findings remain project-local and
+must not be presented as cross-package correctness. Confirm employer policy
+before benchmarking proprietary code, and keep private reports outside the
+repository when required.
+
 A one-minute demo:
 
 1. Open `fixtures/simple-project` in the Extension Development Host.
