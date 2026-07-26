@@ -1,0 +1,15 @@
+{
+  "generatedAt": "2026-07-26T05:31:23.003Z",
+  "nodeVersion": "v25.6.0",
+  "filesAnalyzed": 104,
+  "symbolsIndexed": 400,
+  "approximateLoc": 15108,
+  "durationMs": 445,
+  "expected": 100,
+  "actual": 100,
+  "truePositives": 100,
+  "falsePositives": 0,
+  "falseNegatives": 0,
+  "precision": 1,
+  "recall": 1
+}

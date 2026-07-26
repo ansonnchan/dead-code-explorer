@@ -24,6 +24,8 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "perf": "npm run build && node dist/scripts/performance.js",
+    "generate:synthetic": "npm run build && node dist/scripts/generateSyntheticRepo.js",
+    "verify:correctness": "npm run build && node dist/scripts/verifyCorrectness.js",
     "package": "npm run build"
   },
   "dependencies": {
