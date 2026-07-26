@@ -20,6 +20,7 @@ const FRAMEWORK_PATTERNS = [
 export function createFindings(
   index: RepositoryIndex,
   reachable: Set<string>,
+  reachableSymbols: Set<string>,
   config: ExplorerConfig,
   ignoredIds: Set<string>
 ): { findings: Finding[]; ignoredFindings: Finding[] } {
@@ -69,6 +70,42 @@ export function createFindings(
   }
 
   for (const symbol of index.symbols.values()) {
+    if (
+      symbol.usageReferences > 0 &&
+      reachable.has(symbol.filePath) &&
+      !reachableSymbols.has(symbol.id)
+    ) {
+      const evidence = [
+        `This ${symbol.kind} is referenced only by other unreachable declarations.`,
+        "No reference path from top-level execution or a preserved public API was found."
+      ];
+      let score = symbol.isExported ? 3 : 4;
+      const risks: RiskCategory[] = [];
+      if (symbol.isPublicPackageExport) {
+        score -= 3;
+        risks.push("public-api");
+        evidence.push(
+          "It is exported from a package entry, so external consumers may use it."
+        );
+      }
+      score = applyRepositoryRisks(
+        score,
+        symbol.filePath,
+        hasDynamicImport,
+        risks,
+        evidence
+      );
+      const finding = symbolFinding(symbol, score, evidence, risks);
+      finding.kind = "unreachable-symbol";
+      storeFinding(
+        finding,
+        config,
+        ignoredIds,
+        findings,
+        ignoredFindings
+      );
+      continue;
+    }
     if (symbol.usageReferences > 0) {
       continue;
     }

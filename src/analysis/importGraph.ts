@@ -120,7 +120,9 @@ export function buildImportGraph(
     files,
     symbols: new Map(),
     symbolsByFile: new Map(),
-    symbolReferences: new Map()
+    symbolReferences: new Map(),
+    symbolEdges: new Map(),
+    topLevelSymbolReferences: new Map()
   };
 }
 

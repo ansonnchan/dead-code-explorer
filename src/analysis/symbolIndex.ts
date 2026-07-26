@@ -25,6 +25,12 @@ interface Candidate {
   kind: SymbolKind;
 }
 
+interface OwnerRange {
+  start: number;
+  end: number;
+  symbolId: string;
+}
+
 export function indexSymbols(
   index: RepositoryIndex,
   context: ProjectContext,
@@ -33,6 +39,7 @@ export function indexSymbols(
   const publicFiles = findPublicPackageFiles(context.rootPath);
   const symbolIdsByCompilerSymbol = new Map<ts.Symbol, Set<string>>();
   const declarationNameKeys = new Set<string>();
+  const ownerRangesBySource = new Map<SourceFile, OwnerRange[]>();
 
   for (const sourceFile of context.sourceFiles) {
     const filePath = context.relativePathBySource.get(sourceFile)!;
@@ -41,6 +48,7 @@ export function indexSymbols(
       context
     );
     const symbolIds = new Set<string>();
+    const ownerRanges: OwnerRange[] = [];
 
     for (const candidate of collectCandidates(sourceFile, config)) {
       const { declaration, nameNode, name, kind } = candidate;
@@ -76,7 +84,13 @@ export function indexSymbols(
 
       index.symbols.set(id, symbol);
       index.symbolReferences.set(id, referenceIds);
+      index.symbolEdges.set(id, new Set());
       symbolIds.add(id);
+      ownerRanges.push({
+        start: declaration.getStart(),
+        end: declaration.getEnd(),
+        symbolId: id
+      });
       if (isExported) {
         index.files.get(filePath)?.exportedSymbols.add(id);
       }
@@ -90,13 +104,21 @@ export function indexSymbols(
       declarationNameKeys.add(nodeKey(filePath, nameNode));
     }
     index.symbolsByFile.set(filePath, symbolIds);
+    ownerRangesBySource.set(
+      sourceFile,
+      ownerRanges.sort(
+        (left, right) =>
+          left.end - left.start - (right.end - right.start)
+      )
+    );
   }
 
   indexReferences(
     index,
     context,
     symbolIdsByCompilerSymbol,
-    declarationNameKeys
+    declarationNameKeys,
+    ownerRangesBySource
   );
 }
 
@@ -204,7 +226,8 @@ function indexReferences(
   index: RepositoryIndex,
   context: ProjectContext,
   symbolIdsByCompilerSymbol: Map<ts.Symbol, Set<string>>,
-  declarationNameKeys: Set<string>
+  declarationNameKeys: Set<string>,
+  ownerRangesBySource: Map<SourceFile, OwnerRange[]>
 ): void {
   for (const sourceFile of context.sourceFiles) {
     const filePath = context.relativePathBySource.get(sourceFile)!;
@@ -228,6 +251,10 @@ function indexReferences(
       };
       const referenceId = `${filePath}:${identifier.getStartLineNumber() + sourceOffset.lineOffset}:${identifier.getStart() + sourceOffset.characterOffset}`;
       const isPassThrough = isImportOrReExportReference(identifier);
+      const owner = findReferenceOwner(
+        identifier,
+        ownerRangesBySource.get(sourceFile) ?? []
+      );
       for (const symbolId of matchingIds) {
         const symbol = index.symbols.get(symbolId);
         if (!symbol) {
@@ -237,10 +264,42 @@ function indexReferences(
         index.symbolReferences.get(symbolId)?.add(referenceId);
         if (!isPassThrough) {
           symbol.usageReferences += 1;
+          if (isEagerTopLevelReference(identifier)) {
+            const roots =
+              index.topLevelSymbolReferences.get(filePath) ?? new Set<string>();
+            roots.add(symbolId);
+            index.topLevelSymbolReferences.set(filePath, roots);
+          } else if (owner && owner !== symbolId) {
+            index.symbolEdges.get(owner)?.add(symbolId);
+          }
         }
       }
     }
   }
+}
+
+function findReferenceOwner(
+  reference: Node,
+  ranges: OwnerRange[]
+): string | undefined {
+  const start = reference.getStart();
+  const end = reference.getEnd();
+  return ranges.find((range) => range.start <= start && range.end >= end)
+    ?.symbolId;
+}
+
+function isEagerTopLevelReference(reference: Node): boolean {
+  return !reference.getAncestors().some((ancestor) =>
+    [
+      SyntaxKind.FunctionDeclaration,
+      SyntaxKind.FunctionExpression,
+      SyntaxKind.ArrowFunction,
+      SyntaxKind.MethodDeclaration,
+      SyntaxKind.GetAccessor,
+      SyntaxKind.SetAccessor,
+      SyntaxKind.Constructor
+    ].includes(ancestor.getKind())
+  );
 }
 
 function isImportOrReExportReference(reference: Node): boolean {

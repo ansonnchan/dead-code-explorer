@@ -41,11 +41,14 @@ export interface RepositoryIndex {
   symbols: Map<string, SymbolNode>;
   symbolsByFile: Map<string, Set<string>>;
   symbolReferences: Map<string, Set<string>>;
+  symbolEdges: Map<string, Set<string>>;
+  topLevelSymbolReferences: Map<string, Set<string>>;
 }
 
 export type Confidence = "low" | "medium" | "high";
 export type FindingKind =
   | "unreachable-file"
+  | "unreachable-symbol"
   | "unused-export"
   | "unused-type"
   | "unused-local";

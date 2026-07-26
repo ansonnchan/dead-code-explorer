@@ -29,6 +29,7 @@ export interface FindingNode {
 
 const GROUPS: Array<{ label: string; kind: FindingKind }> = [
   { label: "Unused Files", kind: "unreachable-file" },
+  { label: "Unreachable Symbols", kind: "unreachable-symbol" },
   { label: "Unused Exports", kind: "unused-export" },
   { label: "Unused Types", kind: "unused-type" },
   { label: "Unused Local Symbols", kind: "unused-local" }

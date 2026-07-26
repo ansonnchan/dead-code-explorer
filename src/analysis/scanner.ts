@@ -9,6 +9,7 @@ import {
 import { createFindings } from "./findings";
 import { loadProject } from "./projectLoader";
 import { indexSymbols } from "./symbolIndex";
+import { findReachableSymbols } from "./symbolReachability";
 
 export function scanRepository(
   rootPath: string,
@@ -24,7 +25,14 @@ export function scanRepository(
     index.files,
     entryPointResolution.entryPoints
   );
-  const generated = createFindings(index, reachable, config, ignoredIds);
+  const reachableSymbols = findReachableSymbols(index, reachable, config);
+  const generated = createFindings(
+    index,
+    reachable,
+    reachableSymbols,
+    config,
+    ignoredIds
+  );
   const graphEdges = [...index.files.values()].reduce(
     (total, file) => total + file.imports.size,
     0
