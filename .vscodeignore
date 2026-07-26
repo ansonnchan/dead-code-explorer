@@ -1,0 +1,17 @@
+.git/**
+.gitignore
+.github/**
+.vscode/**
+fixtures/**
+scripts/**
+src/**
+tests/**
+node_modules/**
+coverage/**
+dist/src/**
+dist/scripts/**
+dist/*.map
+vitest.config.ts
+tsconfig.json
+package-lock.json
+*.vsix
