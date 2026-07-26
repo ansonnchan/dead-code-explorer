@@ -1,0 +1,159 @@
+{
+  "name": "dead-code-explorer",
+  "displayName": "Dead Code Explorer",
+  "description": "Local-first, evidence-based dead code analysis for TypeScript and JavaScript.",
+  "version": "0.1.0",
+  "publisher": "local",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.95.0"
+  },
+  "categories": [
+    "Linters",
+    "Other"
+  ],
+  "activationEvents": [
+    "onView:deadCodeExplorer.findings"
+  ],
+  "main": "./dist/extension.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json && esbuild src/extension.ts --bundle --platform=node --format=cjs --external:vscode --sourcemap --outfile=dist/extension.js",
+    "watch": "tsc -p tsconfig.json --watch",
+    "lint": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "perf": "npm run build && node dist/scripts/performance.js",
+    "package": "npm run build"
+  },
+  "dependencies": {
+    "minimatch": "^10.0.1",
+    "ts-morph": "^27.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.1",
+    "@types/vscode": "^1.95.0",
+    "@vitest/coverage-v8": "^4.1.10",
+    "esbuild": "^0.28.1",
+    "typescript": "^5.7.2",
+    "vitest": "^4.1.10"
+  },
+  "contributes": {
+    "commands": [
+      {
+        "command": "deadCodeExplorer.scanWorkspace",
+        "title": "Dead Code Explorer: Scan Workspace",
+        "icon": "$(search)"
+      },
+      {
+        "command": "deadCodeExplorer.rescanCurrentFile",
+        "title": "Dead Code Explorer: Rescan Current File"
+      },
+      {
+        "command": "deadCodeExplorer.configureEntryPoints",
+        "title": "Dead Code Explorer: Configure Entry Points"
+      },
+      {
+        "command": "deadCodeExplorer.ignoreFinding",
+        "title": "Dead Code Explorer: Ignore Finding"
+      },
+      {
+        "command": "deadCodeExplorer.showFinding",
+        "title": "Dead Code Explorer: View Analysis"
+      },
+      {
+        "command": "deadCodeExplorer.clearAnalysisCache",
+        "title": "Dead Code Explorer: Clear Analysis Cache"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "deadCodeExplorer.scanWorkspace",
+          "when": "view == deadCodeExplorer.findings",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "deadCodeExplorer.ignoreFinding",
+          "when": "view == deadCodeExplorer.findings && viewItem == deadCodeExplorer.finding",
+          "group": "inline"
+        }
+      ]
+    },
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "deadCodeExplorer",
+          "title": "Dead Code Explorer",
+          "icon": "media/activity.svg"
+        }
+      ]
+    },
+    "views": {
+      "deadCodeExplorer": [
+        {
+          "id": "deadCodeExplorer.findings",
+          "name": "Findings"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Dead Code Explorer",
+      "properties": {
+        "deadCodeExplorer.entryPoints": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "description": "Workspace-relative entry points. When empty, common entry points are inferred and clearly reported."
+        },
+        "deadCodeExplorer.exclude": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "**/*.generated.ts",
+            "**/migrations/**",
+            "**/*.stories.tsx"
+          ],
+          "description": "Glob patterns excluded from analysis."
+        },
+        "deadCodeExplorer.preserve": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [
+            "src/public-api.ts",
+            "src/plugins/**"
+          ],
+          "description": "Glob patterns whose findings remain visible under Ignored Findings."
+        },
+        "deadCodeExplorer.includeTypeOnlySymbols": {
+          "type": "boolean",
+          "default": true,
+          "description": "Include interfaces and type aliases in symbol analysis."
+        },
+        "deadCodeExplorer.minimumConfidence": {
+          "type": "string",
+          "enum": [
+            "low",
+            "medium",
+            "high"
+          ],
+          "default": "medium",
+          "description": "Minimum confidence shown in active finding groups."
+        },
+        "deadCodeExplorer.scanOnSave": {
+          "type": "boolean",
+          "default": true,
+          "description": "Run a debounced full scan after saving a TypeScript or JavaScript file."
+        }
+      }
+    }
+  }
+}
