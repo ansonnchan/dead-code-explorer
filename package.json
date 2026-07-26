@@ -5,6 +5,14 @@
   "version": "0.1.0",
   "publisher": "local",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ansonnchan/dead-code-explorer.git"
+  },
+  "homepage": "https://github.com/ansonnchan/dead-code-explorer#readme",
+  "bugs": {
+    "url": "https://github.com/ansonnchan/dead-code-explorer/issues"
+  },
   "engines": {
     "vscode": "^1.95.0"
   },

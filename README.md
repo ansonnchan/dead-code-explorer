@@ -122,10 +122,10 @@ Generate and scan a known-ground-truth repository with:
 npm run verify:correctness
 ```
 
-The checked-in report at `benchmarks/v1-correctness.json` records the actual
-finding count, false positives, false negatives, precision, recall, LOC, and
-scan duration. A perfect score proves the generated distribution and tested
-semantics; it does not prove all real-world repositories.
+The checked-in [correctness report](benchmarks/v1-correctness.json) records the
+actual finding count, false positives, false negatives, precision, recall, LOC,
+and scan duration. A perfect score proves the generated distribution and
+tested semantics; it does not prove all real-world repositories.
 
 Run the reproducible synthetic performance checkpoints with:
 
