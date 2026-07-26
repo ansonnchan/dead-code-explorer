@@ -1,39 +1,62 @@
 # Dead Code Explorer
 
-Dead Code Explorer is a local-first VS Code extension that finds potentially
-unused TypeScript, JavaScript, and Vue script-block code. It uses the
-TypeScript compiler through `ts-morph`; source code never leaves the machine
-and no backend, network service, or AI model is involved.
+Dead Code Explorer is an evidence-based VS Code extension for identifying
+potentially unreachable files, functions, classes, types, and exports before
+runtime. It combines compiler-aware project analysis with confidence scoring
+and editor navigation so developers can investigate findings without leaving
+their workspace.
 
-Its core distinction is symbol-level analysis. A file being imported does not
-prove that every export in that file is used, so the scanner builds both:
+Analysis runs locally through the TypeScript compiler and `ts-morph`. Source
+code is never uploaded, and the extension does not require a backend, network
+service, or AI model.
 
-- a file import graph for entry-point reachability; and
-- a symbol/reference index that follows TypeScript aliases through barrel
-  re-exports; and
-- a symbol reachability graph that distinguishes references from live
-  execution paths from references that exist only inside other dead symbols.
+## Preview
 
-Every result includes evidence, a confidence score, and known static-analysis
-risks. A result is never a claim that code is safe to delete.
+### Explore workspace findings
+
+Review scan metrics, inferred entry points, unreachable files, unused exports,
+and intentionally ignored findings from a dedicated Activity Bar view.
+
+![Dead Code Explorer findings view and workspace commands](assets/findings-overview.png)
+
+### Inspect the evidence
+
+Open a finding in its source file and review the confidence level and static
+evidence directly in the editor.
+
+![Dead Code Explorer confidence evidence for an unused function](assets/finding-evidence.png)
 
 ## Run the extension
 
-Requirements: Node.js 20 or newer and VS Code 1.95 or newer.
+Requirements:
+
+- Node.js 20 or newer
+- VS Code 1.95 or newer
+
+Install dependencies and build the extension:
 
 ```sh
-npm install
+npm ci
 npm run build
 ```
 
-Open this folder in VS Code and press `F5` to start an Extension Development
-Host. In the new window, open a single-root TypeScript or JavaScript project whose
-`tsconfig.json` is at the workspace root. Run:
+Open the repository in VS Code and press `F5` to launch an Extension
+Development Host. In the new window, open a single-root project with a
+source-bearing `tsconfig.json` at its workspace root, then run:
 
 `Dead Code Explorer: Scan Workspace`
 
-The activity bar contains the Dead Code Explorer view. A scan shows file,
-symbol, edge, and duration metrics followed by:
+To package and install the extension locally:
+
+```sh
+npx @vscode/vsce package --out dead-code-explorer-0.1.0.vsix
+code --install-extension dead-code-explorer-0.1.0.vsix
+```
+
+## Using the findings
+
+Each scan reports the number of files, indexed symbols, dependency-graph edges,
+and total scan duration. Findings are organized into:
 
 - Unused Files
 - Unreachable Symbols
@@ -42,9 +65,42 @@ symbol, edge, and duration metrics followed by:
 - Unused Local Symbols
 - Ignored Findings
 
-Select a finding to open and highlight its declaration and show the evidence
-panel. Flagged declarations also receive an editor decoration and CodeLens
-actions.
+Selecting a finding opens and highlights its declaration, then displays the
+supporting evidence. Flagged declarations also receive editor decorations and
+CodeLens actions for viewing or ignoring the result.
+
+Dead Code Explorer treats static analysis as evidence rather than proof that
+code is safe to delete. Public APIs, dynamic imports, framework conventions,
+and other detectable risks lower a finding's confidence instead of being
+silently ignored.
+
+## Why Dead Code Explorer
+
+Dead code accumulates as applications evolve: features are removed, entry
+points change, exports survive refactors, and references remain trapped inside
+otherwise unreachable code. Text search and import counts cannot reliably
+distinguish live execution paths from dead dependency chains.
+
+Dead Code Explorer addresses that gap by modeling reachability at both the file
+and symbol levels. Its goal is not automatic deletion; it is to give developers
+clear, navigable evidence for deciding what deserves investigation.
+
+## How analysis works
+
+The scanner performs one compiler-aware project pass:
+
+1. Load the workspace configuration and resolve explicit or inferred entry
+   points.
+2. Build a file import graph and identify files unreachable from those entry
+   points.
+3. Create a project-wide symbol/reference index that follows aliases and barrel
+   re-exports.
+4. Traverse symbol relationships to distinguish live symbols from references
+   that exist only inside other unreachable declarations.
+5. Score each finding using its evidence and known static-analysis risks.
+
+The reachability passes operate in `O(V + E)` time over their respective
+graphs. This avoids repeatedly searching the project for every symbol.
 
 ## Configuration
 
@@ -75,7 +131,8 @@ export function discoveredByMetadata() {}
 ```
 
 The **Ignore** action persists a finding ID in VS Code workspace state.
-Preserved and inline-suppressed results remain inspectable in Ignored Findings.
+Preserved and inline-suppressed results remain inspectable under Ignored
+Findings.
 
 ## Commands
 
@@ -85,11 +142,7 @@ Preserved and inline-suppressed results remain inspectable in Ignored Findings.
 - `Dead Code Explorer: Ignore Finding`
 - `Dead Code Explorer: Clear Analysis Cache`
 
-V1 uses a full project rescan for both manual and save-triggered rescans.
-
 ## Confidence model
-
-The initial evidence weights are:
 
 | Signal | Weight |
 | --- | ---: |
@@ -101,20 +154,22 @@ The initial evidence weights are:
 | Symbol is a public package export | -3 |
 | Framework-managed convention | -2 |
 
-Scores of 5 or more are High, 2–4 are Medium, and lower scores are Low.
-Dynamic imports, public package APIs, and convention-driven files are called
-out in the evidence panel.
+Scores of 5 or more are High, scores from 2–4 are Medium, and lower scores are
+Low. The evidence panel explains which signals and risk categories affected
+each result.
 
-## Test and demo
+## Validation and benchmarking
+
+Run the automated test suite and compile the extension:
 
 ```sh
 npm test
 npm run build
 ```
 
-The `fixtures/` directory contains known-answer projects for relative imports,
-path aliases, barrel exports, dynamic imports, public package APIs,
-JavaScript/JSDoc, and Vue single-file components.
+The `fixtures/` directory contains known-answer projects covering relative
+imports, path aliases, barrel exports, dynamic imports, public package APIs,
+JavaScript with JSDoc, and Vue single-file components.
 
 Generate and scan a known-ground-truth repository with:
 
@@ -123,9 +178,10 @@ npm run verify:correctness
 ```
 
 The checked-in [correctness report](benchmarks/v1-correctness.json) records the
-actual finding count, false positives, false negatives, precision, recall, LOC,
-and scan duration. A perfect score proves the generated distribution and
-tested semantics; it does not prove all real-world repositories.
+finding count, false positives, false negatives, precision, recall, analyzed
+lines, and scan duration. A perfect result validates the generated distribution
+and tested semantics; it does not claim correctness for every real-world
+framework or repository.
 
 Run the reproducible synthetic performance checkpoints with:
 
@@ -133,13 +189,10 @@ Run the reproducible synthetic performance checkpoints with:
 npm run perf
 ```
 
-The script records full-scan duration and heap growth for 100, 1,000, and
-5,000-file repositories. On the development machine, the 1,001-file fixture
-completed in about 0.3 seconds and the 5,001-file fixture in about 3.6 seconds;
-results vary by hardware and Node.js version.
+The script records full-scan duration and heap growth for 100-, 1,000-, and
+5,000-file repositories. Results vary by hardware and Node.js version.
 
-Benchmark any source-bearing, single-`tsconfig` repository in fresh Node
-processes with:
+Benchmark a source-bearing project in fresh Node processes with:
 
 ```sh
 npm run benchmark:repo -- /absolute/path/to/project \
@@ -148,14 +201,13 @@ npm run benchmark:repo -- /absolute/path/to/project \
   --label private-repository
 ```
 
-The command writes sanitized JSON and Markdown reports under
-`benchmarks/results/`. Reports include p50/p95 full-scan latency, synchronous
-event-loop blocking, peak RSS, files/second, KLOC/second, hardware, Node
-version, and analyzer commit. Repository paths and source contents are never
-written to the report. Default `*-latest` reports are ignored by Git.
+The benchmark writes sanitized JSON and Markdown reports containing p50/p95
+full-scan latency, event-loop blocking, peak RSS, files per second, KLOC per
+second, hardware, Node.js version, and analyzer commit. Repository paths and
+source contents are not written to the report.
 
-For a monorepo with a solution-style root `tsconfig.json`, pass package roots
-whose configs include source files:
+For monorepos with a solution-style root `tsconfig.json`, pass the roots of
+source-bearing projects:
 
 ```sh
 npm run benchmark:repo -- \
@@ -165,44 +217,34 @@ npm run benchmark:repo -- \
   --label private-monorepo
 ```
 
-Multiple roots are scanned independently and aggregated. Their performance
-numbers describe the work performed, but findings remain project-local and
-must not be presented as cross-package correctness. Confirm employer policy
-before benchmarking proprietary code, and keep private reports outside the
-repository when required.
+Multiple roots are analyzed independently and aggregated for performance
+reporting; findings remain project-local. Confirm employer policy before
+benchmarking proprietary code, and keep private reports outside the repository
+when required.
 
-A one-minute demo:
+### One-minute demo
 
 1. Open `fixtures/simple-project` in the Extension Development Host.
 2. Scan the workspace and expand **Unused Files**.
-3. Select `src/orphan.ts` to see its reachability evidence.
-4. Select the `unusedGreeting` export to see its reference evidence.
+3. Select `src/orphan.ts` to inspect its reachability evidence.
+4. Select the `unusedGreeting` export to inspect its reference evidence.
 5. Import and call `unusedGreeting` from `src/index.ts`.
-6. Save the file; after the debounced rescan, the export finding disappears.
+6. Save the file and confirm that the finding disappears after the rescan.
 
-## V1 boundaries
+## Planned improvements
 
-The scanner targets one workspace folder with one root `tsconfig.json`.
-CommonJS `require`, framework-specific route discovery, monorepos, runtime
-dependency injection, decorators/metadata, and arbitrary dynamic property
-access are not proven by static references. Results affected by detectable
-risks are deliberately downgraded.
-
-Symbol reachability identifies functions and other declarations referenced
-only by unreachable declaration chains, including dead cycles. It does not yet
-construct statement-level control-flow graphs, so unreachable statements after
-`return`, `throw`, or statically impossible branches are outside the current
-scope.
-
-JavaScript and JSX are analyzed when the project enables `allowJs` and includes
-those files in `tsconfig.json`; JSDoc-aware projects can additionally enable
-`checkJs`. Vue support extracts the first inline `<script>` or `<script setup>`
-block, supports JavaScript and TypeScript, and maps declaration ranges back to
-the `.vue` file. Vue template references and multiple/external script blocks
-are not resolved yet, so Vue findings receive the framework-convention risk
-penalty.
-
-Python, Go, Rust, Java, and other ecosystems require language-specific
-frontends for parsing, module resolution, entry-point conventions, and symbol
-identity. Reusing only the UI and confidence engine is safe; pretending the
-TypeScript resolver applies to those languages is not.
+- **Latency and responsiveness:** Move compiler analysis into a worker or child
+  process with progress reporting and cancellation, then retain project state
+  for dependency-aware incremental rescans. The current full-scan architecture
+  reconstructs the project synchronously on every run.
+- **Memory and extension size:** Reduce peak compiler memory use and investigate
+  further bundle splitting. The runtime bundle is already minified, but the
+  embedded TypeScript compiler remains the largest component and should not be
+  removed at the expense of semantic accuracy.
+- **Additional languages:** Introduce language-specific analysis frontends for
+  ecosystems such as C# and Java while reusing the existing graph, confidence,
+  and editor layers. Each frontend must preserve native project resolution and
+  symbol semantics rather than relying on syntax-only parsing.
+- **Marketplace distribution:** Publish signed releases to the VS Code
+  Marketplace so users can install and receive updates without manually
+  packaging or sideloading a VSIX.
