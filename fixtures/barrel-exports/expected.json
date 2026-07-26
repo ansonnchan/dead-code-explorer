@@ -1,0 +1,8 @@
+{
+  "notUnused": ["barrelOnlyConsumer"],
+  "unusedExports": ["staleExport"],
+  "edges": {
+    "src/main.ts": ["src/index.ts"],
+    "src/index.ts": ["src/feature.ts"]
+  }
+}

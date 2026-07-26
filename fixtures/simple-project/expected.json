@@ -1,0 +1,6 @@
+{
+  "reachable": ["src/index.ts", "src/greet.ts"],
+  "unreachable": ["src/orphan.ts"],
+  "unusedExports": ["unusedGreeting", "orphanedValue"],
+  "ignoredExports": ["metadataDiscoveredGreeting"]
+}

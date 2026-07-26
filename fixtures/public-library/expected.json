@@ -1,0 +1,5 @@
+{
+  "symbol": "externalConsumerOnly",
+  "risk": "public-api",
+  "confidence": "low"
+}

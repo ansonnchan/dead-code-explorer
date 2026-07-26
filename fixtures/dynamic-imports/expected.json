@@ -1,0 +1,5 @@
+{
+  "risk": "dynamic-import",
+  "maximumConfidenceForPlugin": "medium",
+  "staticDynamicImportEdge": ["src/index.ts", "src/static-plugin.ts"]
+}

@@ -1,0 +1,6 @@
+{
+  "edges": {
+    "src/index.ts": ["src/lib/format.ts"]
+  },
+  "unreachable": ["src/unreachable.ts"]
+}
