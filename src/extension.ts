@@ -132,7 +132,8 @@ export function activate(context: vscode.ExtensionContext): void {
         { language: "typescript", scheme: "file" },
         { language: "typescriptreact", scheme: "file" },
         { language: "javascript", scheme: "file" },
-        { language: "javascriptreact", scheme: "file" }
+        { language: "javascriptreact", scheme: "file" },
+        { language: "vue", scheme: "file" }
       ],
       editorSignals
     ),
@@ -196,7 +197,7 @@ export function activate(context: vscode.ExtensionContext): void {
     vscode.workspace.onDidSaveTextDocument((document) => {
       if (
         !readConfig().scanOnSave ||
-        !["typescript", "typescriptreact", "javascript", "javascriptreact"].includes(
+        !["typescript", "typescriptreact", "javascript", "javascriptreact", "vue"].includes(
           document.languageId
         )
       ) {

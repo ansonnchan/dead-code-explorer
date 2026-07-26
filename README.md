@@ -1,9 +1,9 @@
 # Dead Code Explorer
 
 Dead Code Explorer is a local-first VS Code extension that finds potentially
-unused TypeScript and JavaScript code. It uses the TypeScript compiler through
-`ts-morph`; source code never leaves the machine and no backend, network
-service, or AI model is involved.
+unused TypeScript, JavaScript, and Vue script-block code. It uses the
+TypeScript compiler through `ts-morph`; source code never leaves the machine
+and no backend, network service, or AI model is involved.
 
 Its core distinction is symbol-level analysis. A file being imported does not
 prove that every export in that file is used, so the scanner builds both:
@@ -25,7 +25,7 @@ npm run build
 ```
 
 Open this folder in VS Code and press `F5` to start an Extension Development
-Host. In the new window, open a single-root TypeScript project whose
+Host. In the new window, open a single-root TypeScript or JavaScript project whose
 `tsconfig.json` is at the workspace root. Run:
 
 `Dead Code Explorer: Scan Workspace`
@@ -110,7 +110,19 @@ npm run build
 ```
 
 The `fixtures/` directory contains known-answer projects for relative imports,
-path aliases, barrel exports, dynamic imports, and public package APIs.
+path aliases, barrel exports, dynamic imports, public package APIs,
+JavaScript/JSDoc, and Vue single-file components.
+
+Generate and scan a known-ground-truth repository with:
+
+```sh
+npm run verify:correctness
+```
+
+The checked-in [correctness report](benchmarks/v1-correctness.json) records the
+actual finding count, false positives, false negatives, precision, recall, LOC,
+and scan duration. A perfect score proves the generated distribution and
+tested semantics; it does not prove all real-world repositories.
 
 Run the reproducible synthetic performance checkpoints with:
 
@@ -139,3 +151,16 @@ CommonJS `require`, framework-specific route discovery, monorepos, runtime
 dependency injection, decorators/metadata, and arbitrary dynamic property
 access are not proven by static references. Results affected by detectable
 risks are deliberately downgraded.
+
+JavaScript and JSX are analyzed when the project enables `allowJs` and includes
+those files in `tsconfig.json`; JSDoc-aware projects can additionally enable
+`checkJs`. Vue support extracts the first inline `<script>` or `<script setup>`
+block, supports JavaScript and TypeScript, and maps declaration ranges back to
+the `.vue` file. Vue template references and multiple/external script blocks
+are not resolved yet, so Vue findings receive the framework-convention risk
+penalty.
+
+Python, Go, Rust, Java, and other ecosystems require language-specific
+frontends for parsing, module resolution, entry-point conventions, and symbol
+identity. Reusing only the UI and confidence engine is safe; pretending the
+TypeScript resolver applies to those languages is not.

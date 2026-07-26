@@ -117,4 +117,41 @@ describe("repository scanner", () => {
       )
     ).toBe(true);
   });
+
+  it("analyzes JavaScript exports with JSDoc type checking enabled", () => {
+    const result = scanRepository(
+      fixturePath("javascript-jsdoc"),
+      config({ entryPoints: ["src/index.js"] })
+    );
+
+    expect(
+      result.findings.some(
+        (finding) =>
+          finding.kind === "unused-export" &&
+          finding.name === "unusedLegacyHelper"
+      )
+    ).toBe(true);
+    expect(
+      result.findings.some((finding) => finding.name === "formatUser")
+    ).toBe(false);
+  });
+
+  it("maps Vue script-block findings back to the original SFC", () => {
+    const result = scanRepository(
+      fixturePath("vue-sfc"),
+      config({ entryPoints: ["src/App.vue"] })
+    );
+    const finding = result.findings.find(
+      (item) => item.name === "unusedVueHelper"
+    );
+
+    expect(finding).toMatchObject({
+      kind: "unused-local",
+      filePath: "src/App.vue",
+      startLine: 10
+    });
+    expect(
+      result.findings.some((item) => item.name === "liveHelper")
+    ).toBe(false);
+  });
 });

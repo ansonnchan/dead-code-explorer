@@ -1,7 +1,7 @@
 {
   "name": "dead-code-explorer",
   "displayName": "Dead Code Explorer",
-  "description": "Local-first, evidence-based dead code analysis for TypeScript and JavaScript.",
+  "description": "Local-first, evidence-based dead code analysis for TypeScript, JavaScript, and Vue script blocks.",
   "version": "0.1.0",
   "publisher": "local",
   "license": "MIT",

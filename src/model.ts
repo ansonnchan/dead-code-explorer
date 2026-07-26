@@ -98,6 +98,10 @@ export interface ProjectContext {
   tsconfigPath: string;
   sourceFiles: SourceFile[];
   relativePathBySource: Map<SourceFile, string>;
+  sourceOffsetBySource: Map<
+    SourceFile,
+    { characterOffset: number; lineOffset: number }
+  >;
 }
 
 export interface ExplorerConfig {

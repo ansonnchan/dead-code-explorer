@@ -44,8 +44,13 @@ export function indexSymbols(
 
     for (const candidate of collectCandidates(sourceFile, config)) {
       const { declaration, nameNode, name, kind } = candidate;
-      const start = declaration.getStart();
-      const startLine = declaration.getStartLineNumber();
+      const sourceOffset = context.sourceOffsetBySource.get(sourceFile) ?? {
+        characterOffset: 0,
+        lineOffset: 0
+      };
+      const start = declaration.getStart() + sourceOffset.characterOffset;
+      const startLine =
+        declaration.getStartLineNumber() + sourceOffset.lineOffset;
       const id = `${filePath}:${startLine}:${kind}:${start}`;
       const isExported = exportedDeclarationKeys.has(
         declarationKey(filePath, declaration)
@@ -58,9 +63,9 @@ export function indexSymbols(
         kind,
         filePath,
         startLine,
-        endLine: declaration.getEndLineNumber(),
+        endLine: declaration.getEndLineNumber() + sourceOffset.lineOffset,
         start,
-        end: declaration.getEnd(),
+        end: declaration.getEnd() + sourceOffset.characterOffset,
         isExported,
         isPublicPackageExport: isExported && publicFiles.has(filePath),
         referenceIds,
@@ -217,7 +222,11 @@ function indexReferences(
       if (!matchingIds) {
         continue;
       }
-      const referenceId = `${filePath}:${identifier.getStartLineNumber()}:${identifier.getStart()}`;
+      const sourceOffset = context.sourceOffsetBySource.get(sourceFile) ?? {
+        characterOffset: 0,
+        lineOffset: 0
+      };
+      const referenceId = `${filePath}:${identifier.getStartLineNumber() + sourceOffset.lineOffset}:${identifier.getStart() + sourceOffset.characterOffset}`;
       const isPassThrough = isImportOrReExportReference(identifier);
       for (const symbolId of matchingIds) {
         const symbol = index.symbols.get(symbolId);

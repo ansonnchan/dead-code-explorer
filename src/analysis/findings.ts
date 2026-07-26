@@ -13,7 +13,8 @@ const FRAMEWORK_PATTERNS = [
   "**/routes/**",
   "**/*.stories.*",
   "**/migrations/**",
-  "**/commands/**"
+  "**/commands/**",
+  "**/*.vue"
 ];
 
 export function createFindings(
