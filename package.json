@@ -25,6 +25,7 @@
   ],
   "main": "./dist/extension.js",
   "scripts": {
+    "vscode:prepublish": "npm run build",
     "build": "tsc -p tsconfig.json && esbuild src/extension.ts --bundle --platform=node --format=cjs --external:vscode --minify --sourcemap --outfile=dist/extension.js",
     "watch": "tsc -p tsconfig.json --watch",
     "lint": "tsc -p tsconfig.json --noEmit",
@@ -35,7 +36,7 @@
     "generate:synthetic": "npm run build && node dist/scripts/generateSyntheticRepo.js",
     "verify:correctness": "npm run build && node dist/scripts/verifyCorrectness.js",
     "benchmark:repo": "npm run build && node dist/scripts/benchmarkRepo.js",
-    "package": "npm run build"
+    "package": "npx --yes @vscode/vsce package"
   },
   "dependencies": {
     "minimatch": "^10.0.1",

@@ -26,32 +26,64 @@ evidence directly in the editor.
 
 ![Dead Code Explorer confidence evidence for an unused function](assets/finding-evidence.png)
 
-## Run the extension
+## Download and install
 
 Requirements:
 
 - Node.js 20 or newer
 - VS Code 1.95 or newer
 
-Install dependencies and build the extension:
+The extension is not currently published on the VS Code Marketplace. Download
+the source and create a local `.vsix` package instead:
 
 ```sh
+git clone https://github.com/ansonnchan/dead-code-explorer.git
+cd dead-code-explorer
 npm ci
-npm run build
-```
-
-Open the repository in VS Code and press `F5` to launch an Extension
-Development Host. In the new window, open a single-root project with a
-source-bearing `tsconfig.json` at its workspace root, then run:
-
-`Dead Code Explorer: Scan Workspace`
-
-To package and install the extension locally:
-
-```sh
-npx @vscode/vsce package --out dead-code-explorer-0.1.0.vsix
+npm run package
 code --install-extension dead-code-explorer-0.1.0.vsix
 ```
+
+If Git is not installed, open the
+[GitHub repository](https://github.com/ansonnchan/dead-code-explorer), select
+**Code > Download ZIP**, extract the archive, open a terminal in the extracted
+folder, and run the last three commands above.
+
+`npm run package` compiles the extension and runs Microsoft's `vsce` packaging
+CLI. The generated filename comes from the `name` and `version` fields in
+`package.json`, so it will change when the extension version changes.
+
+The equivalent commands without the npm shortcut are:
+
+```sh
+npm run build
+npx --yes @vscode/vsce package --out dead-code-explorer-0.1.0.vsix
+```
+
+If the `code` shell command is unavailable, open VS Code's **Extensions** view,
+select the **...** menu, choose **Install from VSIX...**, and select the
+generated file. Reload VS Code if prompted. The **Dead Code Explorer** icon
+will then appear in the Activity Bar. You can confirm the installation from
+the command line with:
+
+```sh
+code --list-extensions --show-versions | grep local.dead-code-explorer
+```
+
+To install a newer locally packaged version, run the install command again
+with the new `.vsix`; add `--force` if VS Code reports that the same version is
+already installed. To remove it, use the Extensions view or run:
+
+```sh
+code --uninstall-extension local.dead-code-explorer
+```
+
+### Run from source for development
+
+After `npm ci`, open this repository in VS Code and press `F5` to launch an
+Extension Development Host. In the new window, open a single-root project with
+a source-bearing `tsconfig.json` at its workspace root, then run **Dead Code
+Explorer: Scan Workspace** from the Command Palette.
 
 ## Using the findings
 
@@ -136,11 +168,37 @@ Findings.
 
 ## Commands
 
-- `Dead Code Explorer: Scan Workspace`
-- `Dead Code Explorer: Rescan Current File`
-- `Dead Code Explorer: Configure Entry Points`
-- `Dead Code Explorer: Ignore Finding`
-- `Dead Code Explorer: Clear Analysis Cache`
+Run commands from the Command Palette with `Ctrl+Shift+P` on Windows/Linux or
+`Cmd+Shift+P` on macOS. Some commands are also available from the Findings
+view, its context menus, or editor CodeLens actions.
+
+- **Dead Code Explorer: Scan Workspace** performs a fresh analysis of the
+  workspace's first root folder, replaces the Findings view results, refreshes
+  editor decorations and CodeLens actions, and writes scan metrics and warnings
+  to the **Dead Code Explorer** output channel.
+- **Dead Code Explorer: Rescan Current File** currently performs the same full
+  workspace scan as **Scan Workspace**. It does not yet run an incremental
+  file-only analysis, because a change in one file can alter reachability
+  elsewhere in the import and symbol graphs.
+- **Dead Code Explorer: Configure Entry Points** asks for a comma-separated
+  list of workspace-relative entry files, saves it to the workspace setting
+  `deadCodeExplorer.entryPoints`, and immediately rescans. Entry points are the
+  roots from which file and symbol reachability is calculated.
+- **Dead Code Explorer: View Analysis** opens the finding's source file,
+  selects and reveals its declaration, and opens an evidence panel showing its
+  confidence score and the signals behind it. Invoke it by selecting a finding
+  or its CodeLens action.
+- **Dead Code Explorer: Ignore Finding** stores the selected finding's ID in
+  VS Code workspace state and rescans. The result moves to **Ignored Findings**;
+  use the action on a finding in the sidebar, evidence panel, or CodeLens.
+- **Dead Code Explorer: Clear Analysis Cache** removes the displayed scan
+  result, editor markers, and all finding IDs ignored through the **Ignore**
+  action. It does not change source files or settings. Run **Scan Workspace**
+  afterward to rebuild the results.
+
+When `deadCodeExplorer.scanOnSave` is enabled, saving a TypeScript, JavaScript,
+or Vue file also starts a debounced full-workspace rescan without a completion
+notification.
 
 ## Confidence model
 
